@@ -23,13 +23,28 @@ pub fn implement(input: DeriveInput) -> TokenStream {
         }
     });
 
+    let setter = fields_named.named.iter().map(|field| {
+        let identifier = field.ident.clone().unwrap();
+        let ty = field.ty.clone();
+        quote! {
+            #visibility fn #identifier(&mut self, #identifier: #ty) -> &mut Self {
+                self.#identifier = Some(#identifier);
+                self
+            }
+        }
+    });
+
     quote! {
         #visibility struct #builder_name {
             #(#builder_fields),*
         }
 
+        impl #builder_name {
+            #(#setter)*
+        }
+
         impl #product_name {
-            pub fn builder() -> #builder_name {
+            #visibility fn builder() -> #builder_name {
                 #builder_name {
                     #(#initial_values),*
                 }
