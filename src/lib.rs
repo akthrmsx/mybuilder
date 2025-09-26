@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use proc_macro::TokenStream;
+use syn::{DeriveInput, parse_macro_input};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod builder;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[proc_macro_derive(Builder)]
+pub fn derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    builder::implement(input).into()
 }
