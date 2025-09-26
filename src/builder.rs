@@ -23,7 +23,7 @@ pub fn implement(input: DeriveInput) -> TokenStream {
         }
     });
 
-    let setter = fields_named.named.iter().map(|field| {
+    let set_values = fields_named.named.iter().map(|field| {
         let identifier = field.ident.clone().unwrap();
         let ty = field.ty.clone();
         quote! {
@@ -34,13 +34,38 @@ pub fn implement(input: DeriveInput) -> TokenStream {
         }
     });
 
+    let validate_values = fields_named.named.iter().map(|field| {
+        let identifier = field.ident.clone().unwrap();
+        let err = format!("required field '{}' is missing", identifier);
+        quote! {
+            if self.#identifier.is_none() {
+                return Err(#err.into());
+            }
+        }
+    });
+
+    let build_values = fields_named.named.iter().map(|field| {
+        let identifier = field.ident.clone().unwrap();
+        quote! {
+            #identifier: self.#identifier.clone().unwrap()
+        }
+    });
+
     quote! {
         #visibility struct #builder_name {
             #(#builder_fields),*
         }
 
         impl #builder_name {
-            #(#setter)*
+            #(#set_values)*
+
+            #visibility fn build(&mut self) -> Result<#product_name, Box<dyn std::error::Error>> {
+                #(#validate_values)*
+
+                Ok(#product_name {
+                    #(#build_values),*
+                })
+            }
         }
 
         impl #product_name {
