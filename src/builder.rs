@@ -38,7 +38,7 @@ pub fn implement(input: DeriveInput) -> TokenStream {
             let ty = &field.ty;
 
             if is_option(ty) {
-                unwrap_option(ty).clone()
+                unwrap_type_argument(ty).clone()
             } else {
                 ty.clone()
             }
@@ -138,14 +138,12 @@ fn is_option(ty: &Type) -> bool {
     }
 }
 
-fn unwrap_option(ty: &Type) -> &Type {
+fn unwrap_type_argument(ty: &Type) -> &Type {
     match extract_last_path_segment(ty) {
-        Some(segment) if segment.ident == "Option" => {
-            match extract_first_generic_argument(segment) {
-                Some(GenericArgument::Type(ty)) => ty,
-                _ => panic!("expects generic argument type"),
-            }
-        }
-        _ => panic!("expects option"),
+        Some(segment) => match extract_first_generic_argument(segment) {
+            Some(GenericArgument::Type(ty)) => ty,
+            _ => panic!("expects type argument"),
+        },
+        _ => panic!("expects segment"),
     }
 }
